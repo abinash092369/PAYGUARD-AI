@@ -1,7 +1,23 @@
-import React from 'react'
-import { ShieldCheck, Cpu, CheckCircle2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { ShieldCheck, CheckCircle2, Database, BarChart3, Activity } from 'lucide-react'
+import { getTransactionStats } from './api/transactions'
+import { formatCurrency } from './utils/formatters'
 
 function App() {
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getTransactionStats()
+      .then((data) => {
+        setStats(data)
+        setLoading(false)
+      })
+      .catch(() => {
+        setLoading(false)
+      })
+  }, [])
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background glow accents */}
@@ -15,7 +31,7 @@ function App() {
           <ShieldCheck className="w-9 h-9" />
         </div>
 
-        {/* Title & Subtitles as specified in prompt */}
+        {/* Title & Subtitles */}
         <div className="space-y-3">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-cyan-400">
             PayGuard AI
@@ -30,18 +46,50 @@ function App() {
 
         <hr className="border-slate-800 my-6" />
 
-        {/* Status card for Phase 1 */}
-        <div className="bg-slate-950/60 rounded-xl p-4 border border-slate-800/80 flex items-center justify-between text-left">
-          <div className="flex items-center space-x-3">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-slate-200">Phase 1 — Project Foundation</p>
-              <p className="text-xs text-slate-400">Razorpay AI Builder Internship 2026</p>
+        {/* Status card for Phase 2 */}
+        <div className="bg-slate-950/60 rounded-xl p-5 border border-slate-800/80 text-left space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-slate-200">Phase 2 — Synthetic Transaction Pipeline</p>
+                <p className="text-xs text-slate-400">Data Model • Validation • EDA • API Foundation</p>
+              </div>
             </div>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Ready
+            </span>
           </div>
-          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            Ready
-          </span>
+
+          {/* Dataset Statistics Preview */}
+          {stats && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800">
+                <p className="text-xs text-slate-400 flex items-center gap-1">
+                  <Database className="w-3.5 h-3.5 text-cyan-400" /> Total Rows
+                </p>
+                <p className="text-base font-bold text-slate-100 mt-1">{stats.total_transactions.toLocaleString()}</p>
+              </div>
+              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800">
+                <p className="text-xs text-slate-400 flex items-center gap-1">
+                  <Activity className="w-3.5 h-3.5 text-rose-400" /> Fraud Rate
+                </p>
+                <p className="text-base font-bold text-rose-400 mt-1">{stats.fraud_rate}%</p>
+              </div>
+              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800">
+                <p className="text-xs text-slate-400 flex items-center gap-1">
+                  <BarChart3 className="w-3.5 h-3.5 text-emerald-400" /> Legitimate
+                </p>
+                <p className="text-base font-bold text-emerald-400 mt-1">{stats.legitimate_transactions.toLocaleString()}</p>
+              </div>
+              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800">
+                <p className="text-xs text-slate-400 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" /> Avg Amount
+                </p>
+                <p className="text-base font-bold text-slate-200 mt-1">{formatCurrency(stats.average_transaction_amount)}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
