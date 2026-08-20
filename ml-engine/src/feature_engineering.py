@@ -49,6 +49,30 @@ def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
 
+    # Ensure required columns exist with sensible defaults if missing
+    defaults = {
+        "amount": 0.0,
+        "transaction_amount_24h": 0.0,
+        "transaction_count_24h": 0,
+        "previous_transaction_amount": 0.0,
+        "distance_from_previous_transaction": 0.0,
+        "is_new_device": 0,
+        "is_new_ip": 0,
+        "is_international": 0,
+        "chargeback_history": 0,
+        "failed_transactions_24h": 0,
+        "account_age_days": 365,
+        "velocity_score": 0.0,
+        "hour_of_day": 12,
+        "customer_age": 30,
+        "country": "IN",
+        "payment_method": "UPI",
+        "merchant_category": "ecommerce",
+    }
+    for col, default_val in defaults.items():
+        if col not in df.columns:
+            df[col] = default_val
+
     # 1. Amount deviation relative to recent 24h average transaction amount
     avg_24h_amt = df["transaction_amount_24h"] / (df["transaction_count_24h"] + 1e-5)
     df["amount_deviation_ratio"] = df["amount"] / (avg_24h_amt + 1.0)

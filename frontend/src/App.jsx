@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react'
-import { ShieldCheck, CheckCircle2, Database, BarChart3, Activity } from 'lucide-react'
+import { ShieldCheck, CheckCircle2, Activity, Zap } from 'lucide-react'
 import { getTransactionStats } from './api/transactions'
-import { formatCurrency } from './utils/formatters'
+import { getTransactionRisk } from './api/risk'
+import { RiskScore } from './components/risk/RiskScore'
+import { RiskDecision } from './components/risk/RiskDecision'
+import { RiskFactors } from './components/risk/RiskFactors'
 
 function App() {
   const [stats, setStats] = useState(null)
+  const [sampleRisk, setSampleRisk] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getTransactionStats()
-      .then((data) => {
-        setStats(data)
-        setLoading(false)
-      })
-      .catch(() => {
-        setLoading(false)
-      })
+    Promise.all([
+      getTransactionStats().catch(() => null),
+      getTransactionRisk('TXN_00000001').catch(() => null),
+    ]).then(([statsData, riskData]) => {
+      setStats(statsData)
+      if (riskData && riskData.data) {
+        setSampleRisk(riskData.data)
+      }
+      setLoading(false)
+    })
   }, [])
 
   return (
@@ -46,14 +52,14 @@ function App() {
 
         <hr className="border-slate-800 my-6" />
 
-        {/* Status card for Phase 2 */}
+        {/* Phase 4 Status Card */}
         <div className="bg-slate-950/60 rounded-xl p-5 border border-slate-800/80 text-left space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-slate-200">Phase 2 — Synthetic Transaction Pipeline</p>
-                <p className="text-xs text-slate-400">Data Model • Validation • EDA • API Foundation</p>
+                <p className="text-sm font-semibold text-slate-200">Phase 4 — AI Risk Scoring & Explainability</p>
+                <p className="text-xs text-slate-400">Risk Score 0–100 • Risk Levels • Policy Decision • Threat Vectors</p>
               </div>
             </div>
             <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -61,33 +67,19 @@ function App() {
             </span>
           </div>
 
-          {/* Dataset Statistics Preview */}
-          {stats && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800">
-                <p className="text-xs text-slate-400 flex items-center gap-1">
-                  <Database className="w-3.5 h-3.5 text-cyan-400" /> Total Rows
-                </p>
-                <p className="text-base font-bold text-slate-100 mt-1">{stats.total_transactions.toLocaleString()}</p>
-              </div>
-              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800">
-                <p className="text-xs text-slate-400 flex items-center gap-1">
-                  <Activity className="w-3.5 h-3.5 text-rose-400" /> Fraud Rate
-                </p>
-                <p className="text-base font-bold text-rose-400 mt-1">{stats.fraud_rate}%</p>
-              </div>
-              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800">
-                <p className="text-xs text-slate-400 flex items-center gap-1">
-                  <BarChart3 className="w-3.5 h-3.5 text-emerald-400" /> Legitimate
-                </p>
-                <p className="text-base font-bold text-emerald-400 mt-1">{stats.legitimate_transactions.toLocaleString()}</p>
-              </div>
-              <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800">
-                <p className="text-xs text-slate-400 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" /> Avg Amount
-                </p>
-                <p className="text-base font-bold text-slate-200 mt-1">{formatCurrency(stats.average_transaction_amount)}</p>
-              </div>
+          {/* Sample Live Risk Result Component Demonstration */}
+          {sampleRisk && (
+            <div className="space-y-4 pt-2">
+              <RiskScore
+                score={sampleRisk.risk_score}
+                level={sampleRisk.risk_level}
+                decision={sampleRisk.decision}
+              />
+              <RiskDecision
+                decision={sampleRisk.decision}
+                summary={sampleRisk.summary}
+              />
+              <RiskFactors factors={sampleRisk.risk_factors} />
             </div>
           )}
         </div>
