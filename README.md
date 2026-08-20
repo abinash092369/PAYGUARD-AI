@@ -9,53 +9,44 @@
 ### Project Overview
 PayGuard AI is an enterprise-grade payment fraud detection and risk scoring engine designed to analyze transaction telemetry, detect complex fraud attack vectors in real-time, and provide explainable risk indicators for payment managers.
 
-> **Disclaimer**: PayGuard AI is an independent prototype built for educational and demonstration purposes as part of the Razorpay AI Builder Internship 2026 application. It does not use Razorpay proprietary data or internal systems.
+> **Disclaimer**: PayGuard AI is an independent prototype built for educational and demonstration purposes as part of the Razorpay AI Builder Internship 2026 application. Prototype evaluation on synthetic payment data. It does not use Razorpay proprietary data or internal systems.
 
 ---
 
-### Status
+### Current Status
 - **Phase 1**: Project Foundation — COMPLETE
 - **Phase 2**: Synthetic Transaction Dataset & Pipeline — COMPLETE
-- **Phase 3**: ML Fraud Detection Model — PLANNED
+- **Phase 3**: ML Fraud Detection Model — COMPLETE
+- **Phase 4**: AI Risk Scoring & Explainability Engine — PLANNED
 
 ---
 
-## Phase 2 — Synthetic Transaction Pipeline
+## Phase 3 — ML Fraud Detection Engine
 
-### 1. Dataset Architecture
-The synthetic transaction pipeline generates realistic, multi-dimensional transaction telemetry for payment fraud modeling.
-- **Location**: `data/transactions.csv`
-- **Default Volume**: 50,000 transactions
-- **Target Distribution**: ~96% Legitimate, ~4% Fraudulent (Class Imbalance)
+PayGuard AI includes a trained machine-learning fraud detection pipeline evaluated on synthetic transaction data.
 
-### 2. Feature Schema (25 Attributes)
-- **Identifiers**: `transaction_id`, `user_id`, `merchant_id`, `device_id`
-- **Core Attributes**: `amount`, `currency`, `transaction_timestamp`, `payment_method`, `ip_address`, `country`, `merchant_category`
-- **User Demographics & History**: `customer_age`, `account_age_days`, `chargeback_history`
-- **Behavioral & Velocity Telemetry**: `transaction_count_24h`, `transaction_amount_24h`, `failed_transactions_24h`, `previous_transaction_amount`, `distance_from_previous_transaction`, `is_new_device`, `is_new_ip`, `is_international`, `hour_of_day`, `velocity_score`
-- **Target Label**: `fraud_label` (0 = Legitimate, 1 = Fraudulent)
+### 1. Model Pipeline
+- **Feature Pipeline**: Preprocesses numerical/categorical fields and derives behavioral signals (`amount_deviation_ratio`, `risk_signal_count`, `distance_velocity_relationship`).
+- **Data Leakage Safeguard**: Strict target separation with 80/20 stratified train/test split (`random_state=42`).
+- **Evaluated Models**: Logistic Regression, Random Forest Classifier, and HistGradientBoostingClassifier.
+- **Model Selection**: Optimizes for Recall, F1-Score, and PR-AUC on imbalanced fraud data (~4.26% fraud rate).
+- **Artifacts**: Models and preprocessors serialized with `joblib` under `ml-engine/models/`.
 
-### 3. Domain Fraud Patterns
-- **Account Takeover (ATO)**: New device + new IP + geographic distance jump + abnormal amount spike.
-- **Velocity Bursts**: Rapid transaction spikes within 24h paired with preceding failed attempts.
-- **Impossible Travel**: Geographic movement violating physical speed boundaries between consecutive transactions.
-- **High-Risk Category Anomalies**: High-value transactions at `crypto`, `gaming`, or `electronics` merchants from unverified hardware.
+### 2. Execution Commands
 
-### 4. Running the Pipeline
-
-#### Generate Dataset
+#### Train ML Engine
 ```bash
-python ml-engine/src/generate_data.py --rows 50000 --seed 42
+python ml-engine/src/train_model.py --seed 42
 ```
 
-#### Validate Data Quality
+#### Evaluate Trained Model
 ```bash
-python ml-engine/src/validate_data.py
+python ml-engine/src/evaluate_model.py
 ```
 
-#### Exploratory Data Analysis (EDA)
+#### Perform Model Inference
 ```bash
-python ml-engine/src/explore_data.py
+python ml-engine/src/predict.py
 ```
 
 ---

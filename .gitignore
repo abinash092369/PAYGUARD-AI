@@ -8,3 +8,5 @@ dist/
 *.sqlite
 *.sqlite3
 models/*.joblib
+ml-engine/models/*.joblib
+ml-engine/outputs/*.png
