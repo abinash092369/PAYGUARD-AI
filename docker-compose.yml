@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=sqlite:///./payguard.db
-      - FRONTEND_URL=http://localhost:5173
+      - FRONTEND_URL=https://payguard-ai.netlify.app
       - RAZORPAY_KEY_ID=rzp_test_demo_key_id
       - RAZORPAY_KEY_SECRET=demo_secret_key
     volumes:
