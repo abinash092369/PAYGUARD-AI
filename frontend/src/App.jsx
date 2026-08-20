@@ -4,6 +4,7 @@ import { Navbar } from './components/layout/Navbar'
 import { Dashboard } from './pages/Dashboard'
 import { Transactions } from './pages/Transactions'
 import { Analyze } from './pages/Analyze'
+import { Alerts } from './pages/Alerts'
 import { Analytics } from './pages/Analytics'
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/analyze" element={<Analyze />} />
+            <Route path="/alerts" element={<Alerts />} />
             <Route path="/analytics" element={<Analytics />} />
           </Routes>
         </main>

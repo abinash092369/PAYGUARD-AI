@@ -1,12 +1,31 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
-import { ShieldCheck, LayoutDashboard, ListFilter, Cpu, BarChart2, Zap } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, ListFilter, Cpu, BarChart2, ShieldAlert } from 'lucide-react'
+import { getAlertStats } from '../../api/alerts'
 
 export function Navbar() {
+  const [openAlertCount, setOpenAlertCount] = useState(0)
+
+  useEffect(() => {
+    getAlertStats()
+      .then((data) => {
+        if (data && data.open !== undefined) {
+          setOpenAlertCount(data.open)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   const navItems = [
     { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { to: '/transactions', label: 'Transactions', icon: <ListFilter className="w-4 h-4" /> },
     { to: '/analyze', label: 'Analyze Risk', icon: <Cpu className="w-4 h-4" /> },
+    {
+      to: '/alerts',
+      label: 'Alerts',
+      icon: <ShieldAlert className="w-4 h-4" />,
+      badge: openAlertCount > 0 ? openAlertCount : null,
+    },
     { to: '/analytics', label: 'Risk Analytics', icon: <BarChart2 className="w-4 h-4" /> },
   ]
 
@@ -41,7 +60,7 @@ export function Navbar() {
               to={item.to}
               end={item.to === '/'}
               className={({ isActive }) =>
-                `flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                `flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all relative ${
                   isActive
                     ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-inner'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -50,6 +69,11 @@ export function Navbar() {
             >
               {item.icon}
               <span className="hidden sm:inline">{item.label}</span>
+              {item.badge !== null && item.badge !== undefined && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse">
+                  {item.badge}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

@@ -2,7 +2,7 @@
 
 **Razorpay AI Builder Internship 2026 — Track 2: AI Risk Manager**
 
-PayGuard AI is an intelligent payment fraud detection and real-time risk engine designed to analyze transaction telemetry, compute 0–100 risk scores, enforce automated decision policies (`ALLOW`, `REVIEW`, `BLOCK`), and generate human-interpretable explanations for flagged threat vectors.
+PayGuard AI is an intelligent payment fraud detection and real-time risk engine designed to analyze transaction telemetry, compute 0–100 risk scores, enforce automated decision policies (`ALLOW`, `REVIEW`, `BLOCK`), generate human-interpretable explanations, and provide automated security alert management for risk analysts.
 
 ---
 
@@ -32,27 +32,39 @@ payguard-ai/
   - Enterprise Fintech Monitoring Console with KPI cards, Fraud Velocity charts (Recharts), and Risk Level distribution.
   - Server-side searchable and paginated Transaction Telemetry Explorer.
   - Manual Risk Analyzer console with interactive inputs and demo presets ("Normal Clean", "Suspicious Spikes", "Critical ATO Vector").
-  - Risk Analytics breakdown.
+- **Phase 6 Alerts, Risk Analytics & Transaction Monitoring**:
+  - Automated Alert Generation & Deduplication Engine (`AlertService`).
+  - Alert Triage Workflow Console (`OPEN` -> `INVESTIGATING` -> `RESOLVED` / `DISMISSED`).
+  - High-Risk Queue & Critical Transaction Monitoring endpoints.
+  - Recharts Risk Analytics with Merchant Category Risk, Payment Rail Risk, and Time-Range Filters (7d, 30d, 90d, All).
 
 ---
 
 ## API Endpoints
 
-### Dashboard APIs
+### Alert APIs
+- `GET /api/alerts`: Paginated list of security alerts (`status`, `severity`, `risk_level`, `search`).
+- `GET /api/alerts/stats`: Summary counts (`total`, `open`, `investigating`, `resolved`, `dismissed`, `critical`, `high`).
+- `GET /api/alerts/recent`: Recent alerts stream (`limit`).
+- `GET /api/alerts/{id}`: Detailed alert payload with underlying transaction telemetry.
+- `PATCH /api/alerts/{id}`: Update alert status (`OPEN`, `INVESTIGATING`, `RESOLVED`, `DISMISSED`).
+
+### Analytics APIs
+- `GET /api/analytics/fraud-rate`: Aggregated fraud rate trends over time.
+- `GET /api/analytics/risk-trends`: Risk level distribution over time.
+- `GET /api/analytics/risk-signals`: Frequency distribution of risk factor codes.
+- `GET /api/analytics/merchant-risk`: Fraud statistics grouped by merchant category.
+- `GET /api/analytics/payment-method-risk`: Fraud statistics grouped by payment rail.
+
+### Monitoring Queue APIs
+- `GET /api/monitoring/high-risk`: High-risk transactions queue (score >= 50).
+- `GET /api/monitoring/critical`: Critical-risk transactions queue (score >= 75).
+- `GET /api/monitoring/summary`: Real-time monitoring KPI summary.
+
+### Dashboard & Risk APIs
 - `GET /api/dashboard/stats`: Aggregate volume, fraud count, fraud rate, and risk counts.
-- `GET /api/dashboard/risk-distribution`: Counts for `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
-- `GET /api/dashboard/fraud-trends`: Daily aggregated fraud velocity over time.
-- `GET /api/dashboard/risk-signals`: Top suspicious threat vector frequency counts.
-- `GET /api/dashboard/recent-transactions`: Recent telemetry records stream.
-
-### Risk APIs
-- `POST /api/risk/analyze`: Evaluates transaction payload and returns score, decision, and risk factors.
-- `GET /api/transactions/{id}/risk`: Real-time risk analysis for a specific transaction ID.
-
-### Transaction APIs
+- `POST /api/risk/analyze`: Evaluates payload and returns score, decision, and risk factors.
 - `GET /api/transactions`: Server-side searchable, filtered, and paginated transaction list.
-- `GET /api/transactions/{id}`: Single transaction details lookup.
-- `GET /api/transactions/stats`: Summary transaction statistics.
 
 ---
 

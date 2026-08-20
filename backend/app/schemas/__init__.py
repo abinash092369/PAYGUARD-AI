@@ -16,6 +16,13 @@ from app.schemas.dashboard import (
     FraudTrendItem,
     RiskSignalItem,
 )
+from app.schemas.alert import (
+    AlertResponse,
+    AlertDetailResponse,
+    AlertStatusUpdateRequest,
+    AlertStatsResponse,
+    PaginatedAlertsResponse,
+)
 
 __all__ = [
     "TransactionResponse",
@@ -30,4 +37,9 @@ __all__ = [
     "RiskDistributionResponse",
     "FraudTrendItem",
     "RiskSignalItem",
+    "AlertResponse",
+    "AlertDetailResponse",
+    "AlertStatusUpdateRequest",
+    "AlertStatsResponse",
+    "PaginatedAlertsResponse",
 ]

@@ -11,6 +11,7 @@ import {
   Cpu,
   ArrowRight,
   RefreshCw,
+  ShieldAlert,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -30,6 +31,10 @@ import {
   getTopRiskSignals,
   getRecentTransactions,
 } from '../api/dashboard'
+import { getRecentAlerts } from '../api/alerts'
+import { getHighRiskQueue } from '../api/monitoring'
+import { AlertSeverityBadge, AlertStatusBadge } from '../components/alerts/AlertBadges'
+import { AlertDetail } from '../components/alerts/AlertDetail'
 import { TransactionDetailModal } from '../components/TransactionDetailModal'
 import { formatCurrency } from '../utils/formatters'
 
@@ -39,28 +44,34 @@ export function Dashboard() {
   const [trends, setTrends] = useState([])
   const [signals, setSignals] = useState([])
   const [recentTxns, setRecentTxns] = useState([])
+  const [recentAlerts, setRecentAlerts] = useState([])
+  const [highRiskQueue, setHighRiskQueue] = useState([])
+  
   const [selectedTxn, setSelectedTxn] = useState(null)
+  const [selectedAlertId, setSelectedAlertId] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
-      const [sData, rData, tData, sigData, recData] = await Promise.all([
+      const [sData, rData, tData, sigData, recData, altData, hrData] = await Promise.all([
         getDashboardStats(),
         getRiskDistribution(),
         getFraudTrends(),
         getTopRiskSignals(),
         getRecentTransactions(10),
+        getRecentAlerts(5),
+        getHighRiskQueue(1, 5),
       ])
       setStats(sData)
       setRiskDist(rData)
       setTrends(tData)
       setSignals(sigData)
       setRecentTxns(recData)
-      setError(null)
+      setRecentAlerts(altData)
+      setHighRiskQueue(hrData.data || [])
     } catch (err) {
-      setError(err.message || 'Failed to load dashboard metrics')
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -83,7 +94,7 @@ export function Dashboard() {
     <div className="space-y-6">
       
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-2xl border border-slate-800 text-left">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
             Real-Time Fraud Monitoring Console
@@ -112,18 +123,9 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Loading Skeleton */}
-      {loading && !stats && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-24 bg-slate-900/60 rounded-xl border border-slate-800 animate-pulse"></div>
-          ))}
-        </div>
-      )}
-
       {/* KPI Cards Grid */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-left">
           <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-1">
             <p className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
               <Database className="w-3.5 h-3.5 text-cyan-400" /> Total Volume
@@ -176,8 +178,89 @@ export function Dashboard() {
         </div>
       )}
 
+      {/* Widgets Grid: Active Alerts & High-Risk Queue */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Active Risk Alerts Widget */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 text-left">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <ShieldAlert className="w-5 h-5 text-rose-400" />
+              <div>
+                <h3 className="text-sm font-bold text-slate-200">Active Security Alerts</h3>
+                <p className="text-[11px] text-slate-400">Top automated alerts requiring analyst review</p>
+              </div>
+            </div>
+            <Link to="/alerts" className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center space-x-1">
+              <span>View All Alerts</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="space-y-2">
+            {recentAlerts.map((alt) => (
+              <div
+                key={alt.alert_id}
+                onClick={() => setSelectedAlertId(alt.alert_id)}
+                className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 hover:border-slate-700 cursor-pointer transition-all flex items-center justify-between"
+              >
+                <div className="flex items-center space-x-3">
+                  <span className="text-xs font-bold text-rose-400 font-mono">{alt.alert_id}</span>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-200">{alt.transaction_id}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">{alt.primary_risk_factor}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <AlertSeverityBadge severity={alt.severity} />
+                  <AlertStatusBadge status={alt.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* High-Risk Queue Widget */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 text-left">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="w-5 h-5 text-orange-400" />
+              <div>
+                <h3 className="text-sm font-bold text-slate-200">High-Risk Monitoring Queue</h3>
+                <p className="text-[11px] text-slate-400">Transactions with elevated threat vectors</p>
+              </div>
+            </div>
+            <Link to="/transactions" className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center space-x-1">
+              <span>Explore All</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="space-y-2">
+            {highRiskQueue.map((txn) => (
+              <div
+                key={txn.transaction_id}
+                onClick={() => setSelectedTxn(txn)}
+                className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 hover:border-slate-700 cursor-pointer transition-all flex items-center justify-between text-xs"
+              >
+                <div>
+                  <p className="font-bold text-cyan-400">{txn.transaction_id}</p>
+                  <p className="text-[10px] text-slate-400">{txn.payment_method} • {txn.merchant_category}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-slate-100">{formatCurrency(txn.amount)}</p>
+                  <span className="text-[10px] font-bold text-rose-400">FLAGGED</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
         
         {/* Fraud Trends Area Chart */}
         <div className="lg:col-span-2 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
@@ -257,97 +340,20 @@ export function Dashboard() {
 
       </div>
 
-      {/* Grid: Recent Transactions & Risk Signals */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Recent Transactions Table */}
-        <div className="lg:col-span-2 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-slate-200">Recent Stream Telemetry</h3>
-              <p className="text-[11px] text-slate-400">Click any transaction to execute full AI risk analysis</p>
-            </div>
-
-            <Link
-              to="/transactions"
-              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center space-x-1"
-            >
-              <span>View All</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
-                  <th className="py-2.5 px-3">Transaction ID</th>
-                  <th className="py-2.5 px-3">Amount</th>
-                  <th className="py-2.5 px-3">Rail</th>
-                  <th className="py-2.5 px-3">Category</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {recentTxns.map((txn) => (
-                  <tr
-                    key={txn.transaction_id}
-                    onClick={() => setSelectedTxn(txn)}
-                    className="hover:bg-slate-800/50 cursor-pointer transition-all"
-                  >
-                    <td className="py-3 px-3 font-bold text-cyan-400">{txn.transaction_id}</td>
-                    <td className="py-3 px-3 font-semibold text-slate-100">{formatCurrency(txn.amount)}</td>
-                    <td className="py-3 px-3 text-slate-300">{txn.payment_method}</td>
-                    <td className="py-3 px-3 text-slate-400 capitalize">{txn.merchant_category}</td>
-                    <td className="py-3 px-3">
-                      {txn.fraud_label === 1 ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
-                          FRAUD
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                          CLEAN
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <span className="text-xs text-cyan-400 font-semibold hover:underline">Inspect →</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Top Risk Signals List */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-          <div>
-            <h3 className="text-sm font-bold text-slate-200">Top Suspicious Threat Vectors</h3>
-            <p className="text-[11px] text-slate-400">Grounded feature anomalies detected across dataset</p>
-          </div>
-
-          <div className="space-y-3">
-            {signals.map((sig, idx) => (
-              <div key={idx} className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-200">{sig.signal_name}</span>
-                  <span className="text-xs font-extrabold text-cyan-400">{sig.count.toLocaleString()}</span>
-                </div>
-                <p className="text-[10px] text-slate-400 leading-relaxed">{sig.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
-
       {/* Transaction Detail Modal */}
       {selectedTxn && (
         <TransactionDetailModal
           transaction={selectedTxn}
           onClose={() => setSelectedTxn(null)}
+        />
+      )}
+
+      {/* Alert Detail Modal */}
+      {selectedAlertId && (
+        <AlertDetail
+          alertId={selectedAlertId}
+          onClose={() => setSelectedAlertId(null)}
+          onStatusUpdated={() => fetchDashboardData()}
         />
       )}
 
