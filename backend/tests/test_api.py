@@ -8,10 +8,9 @@ client = TestClient(app)
 def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {
-        "status": "healthy",
-        "service": "PayGuard AI Backend"
-    }
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["service"] == "PayGuard AI Backend"
 
 
 def test_docs_page():

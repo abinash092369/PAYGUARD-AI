@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./payguard.db
+      - FRONTEND_URL=http://localhost:5173
+      - RAZORPAY_KEY_ID=rzp_test_demo_key_id
+      - RAZORPAY_KEY_SECRET=demo_secret_key
+    volumes:
+      - ./data:/app/data
+      - ./ml-engine/models:/app/ml-engine/models
