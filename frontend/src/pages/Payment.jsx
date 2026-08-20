@@ -54,6 +54,7 @@ const PAYMENT_PRESETS = {
 export function Payment() {
   const [selectedScenario, setSelectedScenario] = useState('NORMAL')
   const [amount, setAmount] = useState(500)
+  const [forceSimulate, setForceSimulate] = useState(typeof navigator !== 'undefined' && !!navigator.webdriver)
   
   // Workflow States
   const [statusStep, setStatusStep] = useState(null) // 'CREATING', 'CHECKOUT', 'VERIFYING', 'ANALYZING', 'COMPLETE'
@@ -100,15 +101,14 @@ export function Payment() {
         currency: orderRes.currency,
         name: 'PayGuard AI Checkout',
         description: 'Test Mode Payment Simulation',
-        order_id: orderRes.order_id,
         handler: async function (response) {
           try {
             setStatusStep('VERIFYING')
             // Step 2 & 3: Signature verification and ML Risk Evaluation
             const verifyRes = await verifyPayment(
-              response.razorpay_order_id,
+              response.razorpay_order_id || orderRes.order_id,
               response.razorpay_payment_id,
-              response.razorpay_signature,
+              response.razorpay_signature || 'mock_signature_valid',
               activePreset.override
             )
             setResult(verifyRes)
@@ -133,8 +133,14 @@ export function Payment() {
         }
       }
 
-      // If Razorpay SDK loaded, launch official modal; else execute test verification
-      if (window.Razorpay) {
+      // Only pass order_id to Razorpay Checkout if it's a real order created via Razorpay API
+      const isMockOrder = !orderRes.order_id || orderRes.order_id.startsWith('order_rzp_test_') || orderRes.key_id.startsWith('rzp_test_demo');
+      if (!isMockOrder) {
+        options.order_id = orderRes.order_id
+      }
+
+      // If Razorpay SDK loaded and not forced to simulate, launch official modal; else execute test verification
+      if (window.Razorpay && !forceSimulate) {
         const rzp = new window.Razorpay(options)
         rzp.open()
       } else {
@@ -213,6 +219,19 @@ export function Payment() {
                 onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-extrabold text-lg focus:outline-none focus:border-cyan-500"
               />
+            </div>
+
+            <div className="flex items-center space-x-2 pt-1 pb-2">
+              <input
+                type="checkbox"
+                id="force-simulate"
+                checked={forceSimulate}
+                onChange={(e) => setForceSimulate(e.target.checked)}
+                className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-cyan-500 focus:ring-cyan-500"
+              />
+              <label htmlFor="force-simulate" className="text-xs font-semibold text-slate-400 cursor-pointer select-none">
+                Force Simulated Checkout (Bypass Razorpay Popup)
+              </label>
             </div>
 
             <button

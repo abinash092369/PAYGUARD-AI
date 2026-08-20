@@ -80,7 +80,18 @@ class PaymentService:
     ) -> bool:
         """
         Verifies Razorpay HMAC-SHA256 signature server-side.
+        Enforces strict separation between Demo Mode and Real Mode.
         """
+        is_demo_mode = RAZORPAY_KEY_ID.startswith("rzp_test_demo")
+
+        # 1. Reject mock credentials/signatures in Real Mode
+        if not is_demo_mode:
+            if razorpay_signature == "mock_signature_valid":
+                return False
+            if razorpay_order_id.startswith("order_rzp_test_"):
+                return False
+
+        # 2. Compute expected HMAC-SHA256 signature
         msg = f"{razorpay_order_id}|{razorpay_payment_id}"
         expected_sig = hmac.new(
             RAZORPAY_KEY_SECRET.encode("utf-8"),
@@ -89,22 +100,27 @@ class PaymentService:
         ).hexdigest()
 
         is_valid = False
-        # 1. Direct HMAC match or SDK verification
-        if razorpay_signature == expected_sig or razorpay_signature == "mock_signature_valid":
+
+        # 3. Perform constant-time verification comparison
+        if hmac.compare_digest(razorpay_signature, expected_sig):
+            is_valid = True
+        elif is_demo_mode and razorpay_signature == "mock_signature_valid":
             is_valid = True
         else:
-            client = PaymentService.get_razorpay_client()
-            if client:
-                try:
-                    params_dict = {
-                        "razorpay_order_id": razorpay_order_id,
-                        "razorpay_payment_id": razorpay_payment_id,
-                        "razorpay_signature": razorpay_signature,
-                    }
-                    client.utility.verify_payment_signature(params_dict)
-                    is_valid = True
-                except Exception:
-                    is_valid = False
+            # 4. Attempt SDK utility verification only when in Real Mode
+            if not is_demo_mode:
+                client = PaymentService.get_razorpay_client()
+                if client:
+                    try:
+                        params_dict = {
+                            "razorpay_order_id": razorpay_order_id,
+                            "razorpay_payment_id": razorpay_payment_id,
+                            "razorpay_signature": razorpay_signature,
+                        }
+                        client.utility.verify_payment_signature(params_dict)
+                        is_valid = True
+                    except Exception:
+                        is_valid = False
 
         if is_valid:
             payment = db.query(Payment).filter(Payment.order_id == razorpay_order_id).first()
