@@ -4,6 +4,7 @@ import { analyzeTransaction } from '../api/risk'
 import { RiskScore } from '../components/risk/RiskScore'
 import { RiskDecision } from '../components/risk/RiskDecision'
 import { RiskFactors } from '../components/risk/RiskFactors'
+import { ModelInfoCard } from '../components/risk/ModelInfoCard'
 
 const PRESET_DEMOS = {
   NORMAL: {
@@ -403,6 +404,9 @@ export function Analyze() {
         </div>
 
       </div>
+
+      {/* Model Transparency Section */}
+      <ModelInfoCard />
 
     </div>
   )
