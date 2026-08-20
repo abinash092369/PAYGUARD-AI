@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import FRONTEND_URL
-from app.database import Base, engine
+from app.database import Base, engine, init_db_and_migrations
 from app.routes import (
     transactions_router,
     risk_router,
@@ -9,10 +9,11 @@ from app.routes import (
     alerts_router,
     analytics_router,
     monitoring_router,
+    payments_router,
 )
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Create database tables & run auto-migrations
+init_db_and_migrations()
 
 app = FastAPI(
     title="PayGuard AI Backend",
@@ -36,6 +37,7 @@ app.include_router(dashboard_router)
 app.include_router(alerts_router)
 app.include_router(analytics_router)
 app.include_router(monitoring_router)
+app.include_router(payments_router)
 
 
 @app.get("/health")

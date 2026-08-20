@@ -2,6 +2,8 @@ import React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Navbar } from './components/layout/Navbar'
 import { Dashboard } from './pages/Dashboard'
+import { Payment } from './pages/Payment'
+import { Payments } from './pages/Payments'
 import { Transactions } from './pages/Transactions'
 import { Analyze } from './pages/Analyze'
 import { Alerts } from './pages/Alerts'
@@ -19,6 +21,8 @@ function App() {
         <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/payments" element={<Payments />} />
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/analyze" element={<Analyze />} />
             <Route path="/alerts" element={<Alerts />} />
@@ -28,7 +32,7 @@ function App() {
 
         {/* Footer */}
         <footer className="border-t border-slate-800/80 bg-slate-900/50 py-4 text-center text-xs text-slate-500">
-          PayGuard AI • Razorpay AI Builder Internship 2026 — Track 2: AI Risk Manager
+          PayGuard AI • Razorpay AI Builder Internship 2026 — Track 2: AI Risk Manager (Razorpay Test Mode)
         </footer>
 
       </div>

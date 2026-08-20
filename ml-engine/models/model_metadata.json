@@ -1,7 +1,7 @@
 {
   "model_name": "Random Forest",
   "version": "1.0.0",
-  "training_datetime": "2026-08-20T18:33:27.174292",
+  "training_datetime": "2026-08-20T18:38:58.002274",
   "total_dataset_rows": 50000,
   "train_rows": 40000,
   "test_rows": 10000,
