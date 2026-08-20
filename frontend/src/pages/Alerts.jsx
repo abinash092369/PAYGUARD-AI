@@ -49,7 +49,7 @@ export function Alerts() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-left">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
@@ -135,9 +135,11 @@ export function Alerts() {
         </form>
       </div>
 
-      {/* Alerts Table */}
+      {/* Alerts Table & Mobile Cards */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-        <div className="overflow-x-auto">
+        
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -171,8 +173,8 @@ export function Alerts() {
                     onClick={() => setSelectedAlertId(alt.alert_id)}
                     className="hover:bg-slate-800/50 cursor-pointer transition-all"
                   >
-                    <td className="py-3 px-3 font-bold text-rose-400">{alt.alert_id}</td>
-                    <td className="py-3 px-3 font-bold text-cyan-400">{alt.transaction_id}</td>
+                    <td className="py-3 px-3 font-bold text-rose-400 font-mono">{alt.alert_id}</td>
+                    <td className="py-3 px-3 font-bold text-cyan-400 font-mono">{alt.transaction_id}</td>
                     <td className="py-3 px-3 font-extrabold text-slate-100">{alt.risk_score} / 100</td>
                     <td className="py-3 px-3">
                       <AlertSeverityBadge severity={alt.severity} />
@@ -189,6 +191,45 @@ export function Alerts() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Responsive Cards View */}
+        <div className="sm:hidden space-y-3">
+          {loading ? (
+            <div className="py-8 text-center text-slate-500">
+              <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-cyan-400" />
+              <span>Loading alert queue...</span>
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="py-8 text-center text-slate-500">
+              No matching alerts found in active queue.
+            </div>
+          ) : (
+            alerts.map((alt) => (
+              <div
+                key={alt.alert_id}
+                onClick={() => setSelectedAlertId(alt.alert_id)}
+                className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2.5 cursor-pointer hover:border-cyan-500/40 transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-rose-400">{alt.alert_id}</span>
+                  <AlertSeverityBadge severity={alt.severity} />
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Transaction ID:</span>
+                  <span className="font-mono font-bold text-cyan-400">{alt.transaction_id}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Score & Signal:</span>
+                  <span className="font-mono text-slate-200">{alt.risk_score}/100 • {alt.primary_risk_factor}</span>
+                </div>
+                <div className="pt-2 border-t border-slate-900 flex items-center justify-between">
+                  <AlertStatusBadge status={alt.status} />
+                  <span className="text-xs text-cyan-400 font-bold">Investigate →</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Pagination Bar */}

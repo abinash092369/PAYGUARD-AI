@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Filter, ChevronLeft, ChevronRight, RefreshCw, Cpu } from 'lucide-react'
+import { Search, Filter, ChevronLeft, ChevronRight, RefreshCw, Cpu, ShieldAlert, CheckCircle2 } from 'lucide-react'
 import { getTransactions } from '../api/transactions'
 import { TransactionDetailModal } from '../components/TransactionDetailModal'
 import { formatCurrency } from '../utils/formatters'
@@ -53,20 +53,45 @@ export function Transactions() {
     fetchTransactionsData()
   }
 
+  const renderRiskBadge = (txn) => {
+    if (txn.fraud_label === 1) {
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+          CRITICAL FRAUD
+        </span>
+      )
+    }
+    return (
+      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+        LEGITIMATE
+      </span>
+    )
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-left">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-white">Transaction Telemetry Explorer</h2>
           <p className="text-xs text-slate-400 mt-1">
-            Browse, search, and filter 50,000 synthetic transaction records with server-side pagination.
+            Browse, search, and filter telemetry transaction records with server-side pagination.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2 text-xs font-semibold text-slate-400 bg-slate-950/60 px-3 py-2 rounded-xl border border-slate-800">
-          <span>Total Records: <strong className="text-cyan-400">{total.toLocaleString()}</strong></span>
+        <div className="flex items-center space-x-3">
+          <div className="text-xs font-semibold text-slate-400 bg-slate-950/60 px-3.5 py-2 rounded-xl border border-slate-800">
+            <span>Total Records: <strong className="text-cyan-400">{total.toLocaleString()}</strong></span>
+          </div>
+
+          <button
+            onClick={fetchTransactionsData}
+            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-2 transition-all border border-slate-700"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
@@ -130,9 +155,11 @@ export function Transactions() {
         </form>
       </div>
 
-      {/* Transactions Table */}
+      {/* Transactions Table & Mobile Card View */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-        <div className="overflow-x-auto">
+        
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -142,7 +169,7 @@ export function Transactions() {
                 <th className="py-2.5 px-3">Payment Rail</th>
                 <th className="py-2.5 px-3">Category</th>
                 <th className="py-2.5 px-3">Timestamp</th>
-                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3">Risk Assessment</th>
                 <th className="py-2.5 px-3 text-right">Action</th>
               </tr>
             </thead>
@@ -167,23 +194,13 @@ export function Transactions() {
                     onClick={() => setSelectedTxn(txn)}
                     className="hover:bg-slate-800/50 cursor-pointer transition-all"
                   >
-                    <td className="py-3 px-3 font-bold text-cyan-400">{txn.transaction_id}</td>
-                    <td className="py-3 px-3 text-slate-300">{txn.user_id}</td>
-                    <td className="py-3 px-3 font-semibold text-slate-100">{formatCurrency(txn.amount)}</td>
+                    <td className="py-3 px-3 font-bold text-cyan-400 font-mono">{txn.transaction_id}</td>
+                    <td className="py-3 px-3 text-slate-300 font-mono">{txn.user_id}</td>
+                    <td className="py-3 px-3 font-bold text-slate-100">{formatCurrency(txn.amount)}</td>
                     <td className="py-3 px-3 text-slate-300">{txn.payment_method}</td>
                     <td className="py-3 px-3 text-slate-400 capitalize">{txn.merchant_category}</td>
                     <td className="py-3 px-3 text-slate-400 text-[11px]">{txn.transaction_timestamp}</td>
-                    <td className="py-3 px-3">
-                      {txn.fraud_label === 1 ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
-                          FRAUD
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                          CLEAN
-                        </span>
-                      )}
-                    </td>
+                    <td className="py-3 px-3">{renderRiskBadge(txn)}</td>
                     <td className="py-3 px-3 text-right">
                       <span className="text-xs text-cyan-400 font-semibold hover:underline">Inspect →</span>
                     </td>
@@ -192,6 +209,45 @@ export function Transactions() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Responsive Cards View */}
+        <div className="sm:hidden space-y-3">
+          {loading ? (
+            <div className="py-8 text-center text-slate-500">
+              <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-cyan-400" />
+              <span>Loading transaction records...</span>
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="py-8 text-center text-slate-500">
+              No matching transactions found.
+            </div>
+          ) : (
+            transactions.map((txn) => (
+              <div
+                key={txn.transaction_id}
+                onClick={() => setSelectedTxn(txn)}
+                className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2 cursor-pointer hover:border-cyan-500/40 transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-cyan-400">{txn.transaction_id}</span>
+                  {renderRiskBadge(txn)}
+                </div>
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-slate-400">User / Amount:</span>
+                  <span className="font-bold text-white">{txn.user_id} • {formatCurrency(txn.amount)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Rail / Sector:</span>
+                  <span className="text-slate-300">{txn.payment_method} • {txn.merchant_category}</span>
+                </div>
+                <div className="text-[10px] text-slate-500 pt-2 border-t border-slate-900 flex justify-between items-center">
+                  <span>{txn.transaction_timestamp}</span>
+                  <span className="text-cyan-400 font-bold">Tap to Inspect →</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Pagination Bar */}
