@@ -1,9 +1,10 @@
 import os
 import math
 import pandas as pd
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app.database import get_db
 from app.models.transaction import Transaction
@@ -82,18 +83,43 @@ def get_transaction_stats(db: Session = Depends(get_db)):
 def get_transactions(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    search: Optional[str] = Query(None, description="Search transaction_id, user_id, or merchant_id"),
+    fraud_label: Optional[int] = Query(None, description="Filter by fraud_label (0 or 1)"),
+    merchant_category: Optional[str] = Query(None, description="Filter by merchant category"),
+    payment_method: Optional[str] = Query(None, description="Filter by payment method"),
     db: Session = Depends(get_db),
 ):
     """
-    Retrieves paginated transaction records.
+    Retrieves paginated transaction records with server-side search and filtering.
     """
     seed_transactions_if_empty(db)
-    total = db.query(Transaction).count()
+    query = db.query(Transaction)
+
+    if search:
+        s_term = f"%{search.strip()}%"
+        query = query.filter(
+            or_(
+                Transaction.transaction_id.ilike(s_term),
+                Transaction.user_id.ilike(s_term),
+                Transaction.merchant_id.ilike(s_term),
+            )
+        )
+
+    if fraud_label is not None:
+        query = query.filter(Transaction.fraud_label == fraud_label)
+
+    if merchant_category:
+        query = query.filter(Transaction.merchant_category == merchant_category)
+
+    if payment_method:
+        query = query.filter(Transaction.payment_method == payment_method)
+
+    total = query.count()
 
     if total > 0:
         total_pages = math.ceil(total / limit)
         offset = (page - 1) * limit
-        items = db.query(Transaction).offset(offset).limit(limit).all()
+        items = query.offset(offset).limit(limit).all()
 
         return PaginatedTransactionsResponse(
             total=total,
@@ -103,16 +129,37 @@ def get_transactions(
             data=items,
         )
 
+    # Fallback to CSV if DB query returns 0 items or DB empty
     df = get_csv_fallback_df()
     if df is not None and len(df) > 0:
-        total = len(df)
-        total_pages = math.ceil(total / limit)
+        sub_df = df.copy()
+
+        if search:
+            s_term = search.strip().lower()
+            sub_df = sub_df[
+                sub_df["transaction_id"].str.lower().str.contains(s_term) |
+                sub_df["user_id"].str.lower().str.contains(s_term) |
+                sub_df["merchant_id"].str.lower().str.contains(s_term)
+            ]
+
+        if fraud_label is not None:
+            sub_df = sub_df[sub_df["fraud_label"] == fraud_label]
+
+        if merchant_category:
+            sub_df = sub_df[sub_df["merchant_category"] == merchant_category]
+
+        if payment_method:
+            sub_df = sub_df[sub_df["payment_method"] == payment_method]
+
+        total = len(sub_df)
+        total_pages = math.ceil(total / limit) if total > 0 else 0
         offset = (page - 1) * limit
-        sub_df = df.iloc[offset: offset + limit]
+        page_df = sub_df.iloc[offset: offset + limit]
+
         items = []
-        for idx, row in sub_df.iterrows():
+        for idx, row in page_df.iterrows():
             row_dict = row.to_dict()
-            row_dict["id"] = idx + 1
+            row_dict["id"] = int(idx) + 1
             items.append(row_dict)
 
         return PaginatedTransactionsResponse(

@@ -1,69 +1,78 @@
-# PayGuard AI
+# PayGuard AI — Intelligent Payment Fraud Detection & Risk Engine
 
-## Intelligent Payment Fraud Detection & Risk Engine
+**Razorpay AI Builder Internship 2026 — Track 2: AI Risk Manager**
 
-### Razorpay AI Builder Internship 2026 — Track 2: AI Risk Manager
-
----
-
-### Project Overview
-PayGuard AI is an enterprise-grade payment fraud detection and risk scoring engine designed to analyze transaction telemetry, detect complex fraud attack vectors in real-time, and provide explainable risk indicators for payment managers.
-
-> **Disclaimer**: PayGuard AI is an independent prototype built for educational and demonstration purposes as part of the Razorpay AI Builder Internship 2026 application. Prototype evaluation on synthetic payment data. It does not use Razorpay proprietary data or internal systems.
+PayGuard AI is an intelligent payment fraud detection and real-time risk engine designed to analyze transaction telemetry, compute 0–100 risk scores, enforce automated decision policies (`ALLOW`, `REVIEW`, `BLOCK`), and generate human-interpretable explanations for flagged threat vectors.
 
 ---
 
-### Current Status
-- **Phase 1**: Project Foundation — COMPLETE
-- **Phase 2**: Synthetic Transaction Dataset & Pipeline — COMPLETE
-- **Phase 3**: ML Fraud Detection Model — COMPLETE
-- **Phase 4**: AI Risk Scoring & Explainability Engine — PLANNED
+## System Architecture
 
----
-
-## Phase 3 — ML Fraud Detection Engine
-
-PayGuard AI includes a trained machine-learning fraud detection pipeline evaluated on synthetic transaction data.
-
-### 1. Model Pipeline
-- **Feature Pipeline**: Preprocesses numerical/categorical fields and derives behavioral signals (`amount_deviation_ratio`, `risk_signal_count`, `distance_velocity_relationship`).
-- **Data Leakage Safeguard**: Strict target separation with 80/20 stratified train/test split (`random_state=42`).
-- **Evaluated Models**: Logistic Regression, Random Forest Classifier, and HistGradientBoostingClassifier.
-- **Model Selection**: Optimizes for Recall, F1-Score, and PR-AUC on imbalanced fraud data (~4.26% fraud rate).
-- **Artifacts**: Models and preprocessors serialized with `joblib` under `ml-engine/models/`.
-
-### 2. Execution Commands
-
-#### Train ML Engine
-```bash
-python ml-engine/src/train_model.py --seed 42
-```
-
-#### Evaluate Trained Model
-```bash
-python ml-engine/src/evaluate_model.py
-```
-
-#### Perform Model Inference
-```bash
-python ml-engine/src/predict.py
+```text
+payguard-ai/
+├── frontend/             # Vite + React 18 + Tailwind CSS + Recharts + Lucide UI
+├── backend/              # FastAPI + SQLAlchemy + Pydantic REST API
+├── ml-engine/            # Scikit-Learn Random Forest ML Model & Risk Engine
+├── data/                 # 50,000 Synthetic Payment Transactions Dataset
+├── docs/                 # System Architecture & Diagrams
 ```
 
 ---
 
-## API Endpoints (Backend)
+## Features
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/health` | Service health status check |
-| `GET` | `/docs` | Swagger interactive API documentation |
-| `GET` | `/api/transactions` | Paginated transaction list (`?page=1&limit=20`) |
-| `GET` | `/api/transactions/{id}` | Single transaction details lookup |
-| `GET` | `/api/transactions/stats` | Aggregated dataset fraud metrics |
+- **Phase 1 Foundation**: FastAPI backend, Vite+React frontend, Python 3.11 ML environment setup.
+- **Phase 2 Synthetic Dataset**: 50,000 synthetic transaction records with realistic fraud vectors.
+- **Phase 3 Machine Learning Model**: Evaluated Logistic Regression, Random Forest, and Gradient Boosting. Selected **Random Forest** (F1: 0.9658, PR-AUC: 0.9915).
+- **Phase 4 Risk Scoring & Explainability**:
+  - Calibrated 0–100 Risk Score & Levels (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`).
+  - Automated Decision Engine (`ALLOW`, `REVIEW`, `BLOCK`).
+  - 11 Grounded Risk Factor Detection Codes & Dynamic Explanations.
+- **Phase 5 Real-Time Risk Analysis & Dashboard**:
+  - Enterprise Fintech Monitoring Console with KPI cards, Fraud Velocity charts (Recharts), and Risk Level distribution.
+  - Server-side searchable and paginated Transaction Telemetry Explorer.
+  - Manual Risk Analyzer console with interactive inputs and demo presets ("Normal Clean", "Suspicious Spikes", "Critical ATO Vector").
+  - Risk Analytics breakdown.
 
 ---
 
-## Tech Stack
-- **Frontend**: React, Vite, Tailwind CSS, Axios, Recharts, Lucide React
-- **Backend**: Python 3.11, FastAPI, Uvicorn, SQLAlchemy, Pydantic, SQLite
-- **ML Engine**: pandas, numpy, scikit-learn, joblib, matplotlib, seaborn
+## API Endpoints
+
+### Dashboard APIs
+- `GET /api/dashboard/stats`: Aggregate volume, fraud count, fraud rate, and risk counts.
+- `GET /api/dashboard/risk-distribution`: Counts for `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
+- `GET /api/dashboard/fraud-trends`: Daily aggregated fraud velocity over time.
+- `GET /api/dashboard/risk-signals`: Top suspicious threat vector frequency counts.
+- `GET /api/dashboard/recent-transactions`: Recent telemetry records stream.
+
+### Risk APIs
+- `POST /api/risk/analyze`: Evaluates transaction payload and returns score, decision, and risk factors.
+- `GET /api/transactions/{id}/risk`: Real-time risk analysis for a specific transaction ID.
+
+### Transaction APIs
+- `GET /api/transactions`: Server-side searchable, filtered, and paginated transaction list.
+- `GET /api/transactions/{id}`: Single transaction details lookup.
+- `GET /api/transactions/stats`: Summary transaction statistics.
+
+---
+
+## How to Run locally
+
+### 1. Run Backend Server
+```bash
+cd payguard-ai/backend
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+Backend API will run at `http://127.0.0.1:8000`. Swagger API docs available at `http://127.0.0.1:8000/docs`.
+
+### 2. Run Frontend Dashboard
+```bash
+cd payguard-ai/frontend
+npm run dev
+```
+Frontend console will run at `http://localhost:5173`.
+
+### 3. Run Automated Tests
+- **ML Engine Tests**: `cd ml-engine && python -m unittest discover tests`
+- **Backend API Tests**: `cd backend && python -m pytest tests`
+- **Frontend Build Verification**: `cd frontend && npm run build`

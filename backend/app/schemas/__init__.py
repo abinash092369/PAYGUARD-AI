@@ -10,6 +10,12 @@ from app.schemas.risk import (
     RiskAnalysisResponse,
     RiskAnalysisRequest,
 )
+from app.schemas.dashboard import (
+    DashboardStatsResponse,
+    RiskDistributionResponse,
+    FraudTrendItem,
+    RiskSignalItem,
+)
 
 __all__ = [
     "TransactionResponse",
@@ -20,4 +26,8 @@ __all__ = [
     "RiskAnalysisResult",
     "RiskAnalysisResponse",
     "RiskAnalysisRequest",
+    "DashboardStatsResponse",
+    "RiskDistributionResponse",
+    "FraudTrendItem",
+    "RiskSignalItem",
 ]
