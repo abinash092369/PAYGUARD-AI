@@ -154,7 +154,7 @@ export function LandingPage() {
       </div>
 
       {/* HEADER */}
-      <header className="sticky top-0 z-50 bg-[#070b17]/80 backdrop-blur-xl border-b border-slate-800/80">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#070b17]/95 backdrop-blur-xl border-b border-slate-800/80 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           
           {/* Left Logo */}
@@ -266,7 +266,7 @@ export function LandingPage() {
       </header>
 
       {/* HERO SECTION */}
-      <section className="relative pt-12 pb-20 md:pt-20 md:pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto z-10">
+      <section className="relative pt-28 pb-20 md:pt-36 md:pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           {/* Left Column: Hero Text */}
